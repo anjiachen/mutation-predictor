@@ -529,42 +529,36 @@
                 </div>
             </div>
 
-            <div class="probability-section">
-                <div class="probability-bars">
-                    <div class="probability-bar">
-                        <h4>🟢 有益概率</h4>
-                        <div class="bar-container">
-                            <div class="bar-fill benign" id="benign-bar">0%</div>
-                        </div>
-                    </div>
-                    <div class="probability-bar">
-                        <h4>🔴 有害概率</h4>
-                        <div class="bar-container">
-                            <div class="bar-fill harmful" id="harmful-bar">0%</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                         <div class="probability-section">
+                 <div class="probability-bars">
+                     <div class="probability-bar" style="grid-column: 1 / -1;">
+                         <h4>🧬 TCOY结合强度</h4>
+                         <div class="bar-container">
+                             <div class="bar-fill benign" id="benign-bar">0%</div>
+                         </div>
+                     </div>
+                 </div>
+             </div>
 
-            <div class="risk-assessment">
-                <h4>💡 风险评估与建议</h4>
-                <div class="risk-text" id="risk-text"></div>
-                <div class="rank-info">
-                    <span>风险排名: 第 <span id="rank">-</span> 位</span>
-                    <span style="margin-left: 20px;">（共 171 个突变）</span>
-                </div>
-            </div>
+                         <div class="risk-assessment">
+                 <h4>💡 结合强度评估</h4>
+                 <div class="risk-text" id="risk-text"></div>
+                 <div class="rank-info">
+                     <span>结合强度排名: 第 <span id="rank">-</span> 位</span>
+                     <span style="margin-left: 20px;">（共 171 个突变）</span>
+                 </div>
+             </div>
 
-            <div class="summary-stats">
-                <div class="stat-card">
-                    <div class="stat-number" id="percentile">-</div>
-                    <div class="stat-label">风险百分位</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="confidence">高</div>
-                    <div class="stat-label">预测置信度</div>
-                </div>
-            </div>
+                         <div class="summary-stats">
+                 <div class="stat-card">
+                     <div class="stat-number" id="percentile">-</div>
+                     <div class="stat-label">结合强度百分位</div>
+                 </div>
+                 <div class="stat-card">
+                     <div class="stat-number" id="confidence">高</div>
+                     <div class="stat-label">预测置信度</div>
+                 </div>
+             </div>
         </div>
 
         <div class="data-info">
@@ -1989,37 +1983,28 @@
             document.getElementById('mutation-position').textContent = position;
             document.getElementById('rank').textContent = data.rank;
 
-            // 更新概率条（添加动画效果）
-            const benignPercent = Math.round(data.benign * 100);
-            const harmfulPercent = Math.round(data.harmful * 100);
+                         // 更新TCOY结合强度（添加动画效果）
+             const benignPercent = Math.round(data.benign * 100);
 
-            setTimeout(() => {
-                const benignBar = document.getElementById('benign-bar');
-                const harmfulBar = document.getElementById('harmful-bar');
+             setTimeout(() => {
+                 const benignBar = document.getElementById('benign-bar');
 
-                benignBar.style.width = benignPercent + '%';
-                benignBar.textContent = benignPercent + '%';
+                 benignBar.style.width = benignPercent + '%';
+                 benignBar.textContent = benignPercent + '%';
+             }, 100);
 
-                harmfulBar.style.width = harmfulPercent + '%';
-                harmfulBar.textContent = harmfulPercent + '%';
-            }, 100);
+                         // TCOY结合强度评估
+             let riskText = '';
+             
+             if (data.benign > 0.9) {
+                 riskText = '🟢 高结合强度：该突变预测具有很强的TCOY结合能力，结合强度优异。';
+             } else if (data.benign > 0.8) {
+                 riskText = '🟡 中等结合强度：该突变预测具有中等的TCOY结合能力，结合强度良好。';
+             } else {
+                 riskText = '🔴 低结合强度：该突变预测的TCOY结合能力较弱，建议进一步验证。';
+             }
 
-            // 风险评估
-            let riskText = '';
-            let riskLevel = '';
-            
-            if (data.harmful > 0.2) {
-                riskText = '⚠️ 高风险突变：该突变预测具有显著的有害效应，可能严重影响蛋白质功能。建议进行详细的实验验证和功能研究。';
-                riskLevel = '高风险';
-            } else if (data.harmful > 0.1) {
-                riskText = '⚡ 中等风险突变：该突变可能产生轻度到中度的功能影响。建议根据具体应用场景评估其重要性。';
-                riskLevel = '中等风险';
-            } else {
-                riskText = '✅ 低风险突变：该突变预测对蛋白质功能影响较小，通常被认为是良性的。但仍建议在关键应用中进行验证。';
-                riskLevel = '低风险';
-            }
-
-            document.getElementById('risk-text').textContent = riskText;
+             document.getElementById('risk-text').textContent = riskText;
 
             // 计算百分位
             const percentile = Math.round((1 - (data.rank - 1) / 171) * 100);
