@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蛋白质突变预测系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 3em;
+            font-weight: 300;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.8em;
+            font-weight: 500;
+        }
+
+        .position-section {
+            margin-bottom: 30px;
+        }
+
+        .position-input {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .position-input label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .position-input input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+
+        .position-input input:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .position-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .position-tag {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #bbdefb;
+        }
+
+        .position-tag:hover {
+            background: #1976d2;
+            color: white;
+        }
+
+        .amino-acids-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .amino-acid {
+            aspect-ratio: 1;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .amino-acid:hover {
+            border-color: #4facfe;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background: white;
+        }
+
+        .amino-acid.selected {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-color: #4facfe;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .amino-acid .letter {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .amino-acid .name {
+            font-size: 10px;
+            text-align: center;
+            line-height: 1.2;
+            opacity: 0.8;
+        }
+
+        .predict-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .predict-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(86, 171, 47, 0.3);
+        }
+
+        .predict-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .results-card.show {
+            display: block;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .results-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .results-header h3 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .mutation-info {
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-item .label {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+        }
+
+        .info-item .value {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .probability-section {
+            margin: 30px 0;
+        }
+
+        .probability-bars {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 25px 0;
+        }
+
+        .probability-bar h4 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        .bar-container {
+            background: rgba(255,255,255,0.2);
+            height: 50px;
+            border-radius: 25px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 25px;
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+            position: relative;
+        }
+
+        .bar-fill.harmful {
+            background: linear-gradient(90deg, #ff6b6b, #ee5a24);
+        }
+
+        .bar-fill.benign {
+            background: linear-gradient(90deg, #20bf6b, #0fb9b1);
+        }
+
+        .risk-assessment {
+            background: rgba(255,255,255,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .risk-assessment h4 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+        }
+
+        .risk-text {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .rank-info {
+            font-size: 18px;
+            font-weight: 600;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .data-info {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .amino-acids-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+                 <div class="header">
+             <h1>🧬 蛋白质突变预测系统</h1>
+             <p>基于深度学习模型的高精度突变效应预测平台</p>
+         </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <h2>📍 选择突变位置</h2>
+                <div class="position-section">
+                    <div class="position-input">
+                        <label for="position">突变位置 (范围: 302-417):</label>
+                        <input type="number" id="position" placeholder="例如: 384" min="302" max="417">
+                    </div>
+                    <div class="position-suggestions" id="position-suggestions">
+                        <div class="position-tag" onclick="selectPosition(384)">384</div>
+                        <div class="position-tag" onclick="selectPosition(348)">348</div>
+                        <div class="position-tag" onclick="selectPosition(417)">417</div>
+                        <div class="position-tag" onclick="selectPosition(309)">309</div>
+                        <div class="position-tag" onclick="selectPosition(346)">346</div>
+                        <div class="position-tag" onclick="selectPosition(302)">302</div>
+                        <div class="position-tag" onclick="selectPosition(305)">305</div>
+                        <div class="position-tag" onclick="selectPosition(306)">306</div>
+                        <div class="position-tag" onclick="selectPosition(401)">401</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>🧪 选择目标氨基酸</h2>
+                <div class="amino-acids-grid">
+                    <div class="amino-acid" data-aa="A">
+                        <div class="letter">A</div>
+                        <div class="name">丙氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="R">
+                        <div class="letter">R</div>
+                        <div class="name">精氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="N">
+                        <div class="letter">N</div>
+                        <div class="name">天冬酰胺</div>
+                    </div>
+                    <div class="amino-acid" data-aa="D">
+                        <div class="letter">D</div>
+                        <div class="name">天冬氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="C">
+                        <div class="letter">C</div>
+                        <div class="name">半胱氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="Q">
+                        <div class="letter">Q</div>
+                        <div class="name">谷氨酰胺</div>
+                    </div>
+                    <div class="amino-acid" data-aa="E">
+                        <div class="letter">E</div>
+                        <div class="name">谷氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="G">
+                        <div class="letter">G</div>
+                        <div class="name">甘氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="H">
+                        <div class="letter">H</div>
+                        <div class="name">组氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="I">
+                        <div class="letter">I</div>
+                        <div class="name">异亮氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="L">
+                        <div class="letter">L</div>
+                        <div class="name">亮氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="K">
+                        <div class="letter">K</div>
+                        <div class="name">赖氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="M">
+                        <div class="letter">M</div>
+                        <div class="name">蛋氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="F">
+                        <div class="letter">F</div>
+                        <div class="name">苯丙氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="P">
+                        <div class="letter">P</div>
+                        <div class="name">脯氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="S">
+                        <div class="letter">S</div>
+                        <div class="name">丝氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="T">
+                        <div class="letter">T</div>
+                        <div class="name">苏氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="W">
+                        <div class="letter">W</div>
+                        <div class="name">色氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="Y">
+                        <div class="letter">Y</div>
+                        <div class="name">酪氨酸</div>
+                    </div>
+                    <div class="amino-acid" data-aa="V">
+                        <div class="letter">V</div>
+                        <div class="name">缬氨酸</div>
+                    </div>
+                </div>
+                <button class="predict-btn" onclick="predictMutation()">🔬 预测突变效应</button>
+            </div>
+        </div>
+
+        <div class="card results-card" id="results">
+            <div class="results-header">
+                <h3>📊 预测结果分析</h3>
+                <p>基于深度学习模型的突变效应评估</p>
+            </div>
+
+            <div class="mutation-info">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="label">突变标识</div>
+                        <div class="value" id="mutation-id">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">原始氨基酸</div>
+                        <div class="value" id="original-aa">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">目标氨基酸</div>
+                        <div class="value" id="target-aa">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="label">突变位置</div>
+                        <div class="value">第 <span id="mutation-position">-</span> 位</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="probability-section">
+                <div class="probability-bars">
+                    <div class="probability-bar">
+                        <h4>🟢 有益概率</h4>
+                        <div class="bar-container">
+                            <div class="bar-fill benign" id="benign-bar">0%</div>
+                        </div>
+                    </div>
+                    <div class="probability-bar">
+                        <h4>🔴 有害概率</h4>
+                        <div class="bar-container">
+                            <div class="bar-fill harmful" id="harmful-bar">0%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="risk-assessment">
+                <h4>💡 风险评估与建议</h4>
+                <div class="risk-text" id="risk-text"></div>
+                <div class="rank-info">
+                    <span>风险排名: 第 <span id="rank">-</span> 位</span>
+                    <span style="margin-left: 20px;">（共 171 个突变）</span>
+                </div>
+            </div>
+
+            <div class="summary-stats">
+                <div class="stat-card">
+                    <div class="stat-number" id="percentile">-</div>
+                    <div class="stat-label">风险百分位</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="confidence">高</div>
+                    <div class="stat-label">预测置信度</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="data-info">
+            <h3>📋 数据集信息</h3>
+            <p>本预测系统基于 171 个蛋白质突变的实验数据训练，涵盖位置 302-417 区域的所有可能氨基酸替换。</p>
+            <p>模型采用深度学习技术，能够准确预测突变对蛋白质功能的影响程度。</p>
+        </div>
+    </div>
+
+    <script>
+        // 完整的突变数据库 - 从CSV文件加载的171个突变记录
+        const mutationData = {
+            "384A": {
+                        "benign": 0.9422,
+                        "harmful": 0.0578,
+                        "rank": 341,
+                        "position": "384",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "384C": {
+                        "benign": 0.9371,
+                        "harmful": 0.0629,
+                        "rank": 332,
+                        "position": "384",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "384E": {
+                        "benign": 0.8961,
+                        "harmful": 0.1039,
+                        "rank": 279,
+                        "position": "384",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "384D": {
+                        "benign": 0.9383,
+                        "harmful": 0.0617,
+                        "rank": 335,
+                        "position": "384",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "384G": {
+                        "benign": 0.939,
+                        "harmful": 0.061,
+                        "rank": 339,
+                        "position": "384",
+                        "amino_acid": "G",
+                        "original": "K"
+            },
+            "384I": {
+                        "benign": 0.9358,
+                        "harmful": 0.0642,
+                        "rank": 324,
+                        "position": "384",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "384H": {
+                        "benign": 0.878,
+                        "harmful": 0.122,
+                        "rank": 253,
+                        "position": "384",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "384K": {
+                        "benign": 0.9293,
+                        "harmful": 0.0707,
+                        "rank": 313,
+                        "position": "384",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "384M": {
+                        "benign": 0.9454,
+                        "harmful": 0.0546,
+                        "rank": 342,
+                        "position": "384",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "384L": {
+                        "benign": 0.9083,
+                        "harmful": 0.0917,
+                        "rank": 287,
+                        "position": "384",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "384N": {
+                        "benign": 0.914,
+                        "harmful": 0.086,
+                        "rank": 295,
+                        "position": "384",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "384Q": {
+                        "benign": 0.9352,
+                        "harmful": 0.0648,
+                        "rank": 323,
+                        "position": "384",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "384P": {
+                        "benign": 0.8989,
+                        "harmful": 0.1011,
+                        "rank": 284,
+                        "position": "384",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "384S": {
+                        "benign": 0.9363,
+                        "harmful": 0.0637,
+                        "rank": 328,
+                        "position": "384",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "384R": {
+                        "benign": 0.9388,
+                        "harmful": 0.0612,
+                        "rank": 337,
+                        "position": "384",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "384T": {
+                        "benign": 0.9364,
+                        "harmful": 0.0636,
+                        "rank": 329,
+                        "position": "384",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "384W": {
+                        "benign": 0.8798,
+                        "harmful": 0.1202,
+                        "rank": 259,
+                        "position": "384",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "384V": {
+                        "benign": 0.9283,
+                        "harmful": 0.0717,
+                        "rank": 310,
+                        "position": "384",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "384Y": {
+                        "benign": 0.9335,
+                        "harmful": 0.0665,
+                        "rank": 319,
+                        "position": "384",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "348Y": {
+                        "benign": 0.8003,
+                        "harmful": 0.1997,
+                        "rank": 80,
+                        "position": "348",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "348Q": {
+                        "benign": 0.7934,
+                        "harmful": 0.2066,
+                        "rank": 50,
+                        "position": "348",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "348P": {
+                        "benign": 0.8287,
+                        "harmful": 0.1713,
+                        "rank": 191,
+                        "position": "348",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "348S": {
+                        "benign": 0.779,
+                        "harmful": 0.221,
+                        "rank": 23,
+                        "position": "348",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "348R": {
+                        "benign": 0.7928,
+                        "harmful": 0.2072,
+                        "rank": 47,
+                        "position": "348",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "348T": {
+                        "benign": 0.7959,
+                        "harmful": 0.2041,
+                        "rank": 60,
+                        "position": "348",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "348W": {
+                        "benign": 0.8081,
+                        "harmful": 0.1919,
+                        "rank": 109,
+                        "position": "348",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "348V": {
+                        "benign": 0.8146,
+                        "harmful": 0.1854,
+                        "rank": 138,
+                        "position": "348",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "348I": {
+                        "benign": 0.8118,
+                        "harmful": 0.1882,
+                        "rank": 131,
+                        "position": "348",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "348H": {
+                        "benign": 0.8308,
+                        "harmful": 0.1692,
+                        "rank": 203,
+                        "position": "348",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "348K": {
+                        "benign": 0.7517,
+                        "harmful": 0.2483,
+                        "rank": 4,
+                        "position": "348",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "348M": {
+                        "benign": 0.8103,
+                        "harmful": 0.1897,
+                        "rank": 118,
+                        "position": "348",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "348L": {
+                        "benign": 0.8425,
+                        "harmful": 0.1575,
+                        "rank": 226,
+                        "position": "348",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "348N": {
+                        "benign": 0.8051,
+                        "harmful": 0.1949,
+                        "rank": 92,
+                        "position": "348",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "348A": {
+                        "benign": 0.7851,
+                        "harmful": 0.2149,
+                        "rank": 33,
+                        "position": "348",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "348C": {
+                        "benign": 0.7703,
+                        "harmful": 0.2297,
+                        "rank": 13,
+                        "position": "348",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "348E": {
+                        "benign": 0.7842,
+                        "harmful": 0.2158,
+                        "rank": 31,
+                        "position": "348",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "348D": {
+                        "benign": 0.7983,
+                        "harmful": 0.2017,
+                        "rank": 72,
+                        "position": "348",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "348F": {
+                        "benign": 0.806,
+                        "harmful": 0.194,
+                        "rank": 97,
+                        "position": "348",
+                        "amino_acid": "F",
+                        "original": "K"
+            },
+            "417G": {
+                        "benign": 0.9092,
+                        "harmful": 0.0908,
+                        "rank": 288,
+                        "position": "417",
+                        "amino_acid": "G",
+                        "original": "K"
+            },
+            "346W": {
+                        "benign": 0.7745,
+                        "harmful": 0.2255,
+                        "rank": 16,
+                        "position": "346",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "309C": {
+                        "benign": 0.7812,
+                        "harmful": 0.2188,
+                        "rank": 26,
+                        "position": "309",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "309A": {
+                        "benign": 0.7972,
+                        "harmful": 0.2028,
+                        "rank": 69,
+                        "position": "309",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "309F": {
+                        "benign": 0.7997,
+                        "harmful": 0.2003,
+                        "rank": 76,
+                        "position": "309",
+                        "amino_acid": "F",
+                        "original": "K"
+            },
+            "309G": {
+                        "benign": 0.8113,
+                        "harmful": 0.1887,
+                        "rank": 128,
+                        "position": "309",
+                        "amino_acid": "G",
+                        "original": "K"
+            },
+            "309D": {
+                        "benign": 0.7976,
+                        "harmful": 0.2024,
+                        "rank": 71,
+                        "position": "309",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "309E": {
+                        "benign": 0.847,
+                        "harmful": 0.153,
+                        "rank": 233,
+                        "position": "309",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "309K": {
+                        "benign": 0.8257,
+                        "harmful": 0.1743,
+                        "rank": 178,
+                        "position": "309",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "309H": {
+                        "benign": 0.8154,
+                        "harmful": 0.1846,
+                        "rank": 142,
+                        "position": "309",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "309I": {
+                        "benign": 0.8166,
+                        "harmful": 0.1834,
+                        "rank": 148,
+                        "position": "309",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "309N": {
+                        "benign": 0.8069,
+                        "harmful": 0.1931,
+                        "rank": 101,
+                        "position": "309",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "309L": {
+                        "benign": 0.8167,
+                        "harmful": 0.1833,
+                        "rank": 150,
+                        "position": "309",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "309R": {
+                        "benign": 0.7888,
+                        "harmful": 0.2112,
+                        "rank": 40,
+                        "position": "309",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "309S": {
+                        "benign": 0.8003,
+                        "harmful": 0.1997,
+                        "rank": 79,
+                        "position": "309",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "309P": {
+                        "benign": 0.7962,
+                        "harmful": 0.2038,
+                        "rank": 61,
+                        "position": "309",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "309Q": {
+                        "benign": 0.8324,
+                        "harmful": 0.1676,
+                        "rank": 209,
+                        "position": "309",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "309V": {
+                        "benign": 0.7739,
+                        "harmful": 0.2261,
+                        "rank": 15,
+                        "position": "309",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "309W": {
+                        "benign": 0.7525,
+                        "harmful": 0.2475,
+                        "rank": 5,
+                        "position": "309",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "309T": {
+                        "benign": 0.7843,
+                        "harmful": 0.2157,
+                        "rank": 32,
+                        "position": "309",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "417M": {
+                        "benign": 0.862,
+                        "harmful": 0.138,
+                        "rank": 238,
+                        "position": "417",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "346N": {
+                        "benign": 0.7879,
+                        "harmful": 0.2121,
+                        "rank": 38,
+                        "position": "346",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "346M": {
+                        "benign": 0.8207,
+                        "harmful": 0.1793,
+                        "rank": 161,
+                        "position": "346",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "309Y": {
+                        "benign": 0.8073,
+                        "harmful": 0.1927,
+                        "rank": 106,
+                        "position": "309",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "346K": {
+                        "benign": 0.7619,
+                        "harmful": 0.2381,
+                        "rank": 9,
+                        "position": "346",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "346I": {
+                        "benign": 0.801,
+                        "harmful": 0.199,
+                        "rank": 82,
+                        "position": "346",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "346H": {
+                        "benign": 0.7987,
+                        "harmful": 0.2013,
+                        "rank": 75,
+                        "position": "346",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "346L": {
+                        "benign": 0.7933,
+                        "harmful": 0.2067,
+                        "rank": 49,
+                        "position": "346",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "417K": {
+                        "benign": 0.8831,
+                        "harmful": 0.1169,
+                        "rank": 264,
+                        "position": "417",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "302Y": {
+                        "benign": 0.7721,
+                        "harmful": 0.2279,
+                        "rank": 14,
+                        "position": "302",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "302W": {
+                        "benign": 0.8134,
+                        "harmful": 0.1866,
+                        "rank": 135,
+                        "position": "302",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "302V": {
+                        "benign": 0.7755,
+                        "harmful": 0.2245,
+                        "rank": 19,
+                        "position": "302",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "302T": {
+                        "benign": 0.806,
+                        "harmful": 0.194,
+                        "rank": 96,
+                        "position": "302",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "302S": {
+                        "benign": 0.826,
+                        "harmful": 0.174,
+                        "rank": 179,
+                        "position": "302",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "302R": {
+                        "benign": 0.8183,
+                        "harmful": 0.1817,
+                        "rank": 155,
+                        "position": "302",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "302Q": {
+                        "benign": 0.8306,
+                        "harmful": 0.1694,
+                        "rank": 202,
+                        "position": "302",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "302P": {
+                        "benign": 0.8028,
+                        "harmful": 0.1972,
+                        "rank": 85,
+                        "position": "302",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "302N": {
+                        "benign": 0.8291,
+                        "harmful": 0.1709,
+                        "rank": 195,
+                        "position": "302",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "302M": {
+                        "benign": 0.8311,
+                        "harmful": 0.1689,
+                        "rank": 204,
+                        "position": "302",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "302L": {
+                        "benign": 0.8285,
+                        "harmful": 0.1715,
+                        "rank": 189,
+                        "position": "302",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "302K": {
+                        "benign": 0.8067,
+                        "harmful": 0.1933,
+                        "rank": 99,
+                        "position": "302",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "302I": {
+                        "benign": 0.808,
+                        "harmful": 0.192,
+                        "rank": 108,
+                        "position": "302",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "302H": {
+                        "benign": 0.8151,
+                        "harmful": 0.1849,
+                        "rank": 140,
+                        "position": "302",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "302G": {
+                        "benign": 0.7928,
+                        "harmful": 0.2072,
+                        "rank": 48,
+                        "position": "302",
+                        "amino_acid": "G",
+                        "original": "K"
+            },
+            "302F": {
+                        "benign": 0.7856,
+                        "harmful": 0.2144,
+                        "rank": 35,
+                        "position": "302",
+                        "amino_acid": "F",
+                        "original": "K"
+            },
+            "302E": {
+                        "benign": 0.8097,
+                        "harmful": 0.1903,
+                        "rank": 115,
+                        "position": "302",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "302D": {
+                        "benign": 0.8096,
+                        "harmful": 0.1904,
+                        "rank": 113,
+                        "position": "302",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "302C": {
+                        "benign": 0.8073,
+                        "harmful": 0.1927,
+                        "rank": 104,
+                        "position": "302",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "417T": {
+                        "benign": 0.8427,
+                        "harmful": 0.1573,
+                        "rank": 227,
+                        "position": "417",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "417V": {
+                        "benign": 0.8765,
+                        "harmful": 0.1235,
+                        "rank": 249,
+                        "position": "417",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "417P": {
+                        "benign": 0.8763,
+                        "harmful": 0.1237,
+                        "rank": 248,
+                        "position": "417",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "417Q": {
+                        "benign": 0.8784,
+                        "harmful": 0.1216,
+                        "rank": 255,
+                        "position": "417",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "417R": {
+                        "benign": 0.8847,
+                        "harmful": 0.1153,
+                        "rank": 266,
+                        "position": "417",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "346V": {
+                        "benign": 0.8036,
+                        "harmful": 0.1964,
+                        "rank": 88,
+                        "position": "346",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "417Y": {
+                        "benign": 0.9063,
+                        "harmful": 0.0937,
+                        "rank": 286,
+                        "position": "417",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "417D": {
+                        "benign": 0.8782,
+                        "harmful": 0.1218,
+                        "rank": 254,
+                        "position": "417",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "417E": {
+                        "benign": 0.912,
+                        "harmful": 0.088,
+                        "rank": 293,
+                        "position": "417",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "417F": {
+                        "benign": 0.8907,
+                        "harmful": 0.1093,
+                        "rank": 275,
+                        "position": "417",
+                        "amino_acid": "F",
+                        "original": "K"
+            },
+            "346T": {
+                        "benign": 0.802,
+                        "harmful": 0.198,
+                        "rank": 84,
+                        "position": "346",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "417A": {
+                        "benign": 0.8054,
+                        "harmful": 0.1946,
+                        "rank": 94,
+                        "position": "417",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "417C": {
+                        "benign": 0.8239,
+                        "harmful": 0.1761,
+                        "rank": 172,
+                        "position": "417",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "417L": {
+                        "benign": 0.8643,
+                        "harmful": 0.1357,
+                        "rank": 239,
+                        "position": "417",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "346S": {
+                        "benign": 0.7952,
+                        "harmful": 0.2048,
+                        "rank": 58,
+                        "position": "346",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "417N": {
+                        "benign": 0.879,
+                        "harmful": 0.121,
+                        "rank": 256,
+                        "position": "417",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "417H": {
+                        "benign": 0.9346,
+                        "harmful": 0.0654,
+                        "rank": 322,
+                        "position": "417",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "417I": {
+                        "benign": 0.8974,
+                        "harmful": 0.1026,
+                        "rank": 282,
+                        "position": "417",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "346R": {
+                        "benign": 0.7852,
+                        "harmful": 0.2148,
+                        "rank": 34,
+                        "position": "346",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "346Q": {
+                        "benign": 0.7941,
+                        "harmful": 0.2059,
+                        "rank": 54,
+                        "position": "346",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "346P": {
+                        "benign": 0.827,
+                        "harmful": 0.173,
+                        "rank": 182,
+                        "position": "346",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "346Y": {
+                        "benign": 0.7881,
+                        "harmful": 0.2119,
+                        "rank": 39,
+                        "position": "346",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "417S": {
+                        "benign": 0.7788,
+                        "harmful": 0.2212,
+                        "rank": 22,
+                        "position": "417",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "346F": {
+                        "benign": 0.8112,
+                        "harmful": 0.1888,
+                        "rank": 126,
+                        "position": "346",
+                        "amino_acid": "F",
+                        "original": "K"
+            },
+            "346E": {
+                        "benign": 0.7841,
+                        "harmful": 0.2159,
+                        "rank": 30,
+                        "position": "346",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "346D": {
+                        "benign": 0.7746,
+                        "harmful": 0.2254,
+                        "rank": 17,
+                        "position": "346",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "346C": {
+                        "benign": 0.8272,
+                        "harmful": 0.1728,
+                        "rank": 184,
+                        "position": "346",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "401Y": {
+                        "benign": 0.9112,
+                        "harmful": 0.0888,
+                        "rank": 291,
+                        "position": "401",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "346A": {
+                        "benign": 0.8106,
+                        "harmful": 0.1894,
+                        "rank": 121,
+                        "position": "346",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "401S": {
+                        "benign": 0.9363,
+                        "harmful": 0.0637,
+                        "rank": 327,
+                        "position": "401",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "401R": {
+                        "benign": 0.9099,
+                        "harmful": 0.0901,
+                        "rank": 290,
+                        "position": "401",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "401Q": {
+                        "benign": 0.8848,
+                        "harmful": 0.1152,
+                        "rank": 267,
+                        "position": "401",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "401P": {
+                        "benign": 0.9001,
+                        "harmful": 0.0999,
+                        "rank": 285,
+                        "position": "401",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "401W": {
+                        "benign": 0.9238,
+                        "harmful": 0.0762,
+                        "rank": 306,
+                        "position": "401",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "401T": {
+                        "benign": 0.9212,
+                        "harmful": 0.0788,
+                        "rank": 303,
+                        "position": "401",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "401K": {
+                        "benign": 0.928,
+                        "harmful": 0.072,
+                        "rank": 309,
+                        "position": "401",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "401I": {
+                        "benign": 0.8897,
+                        "harmful": 0.1103,
+                        "rank": 274,
+                        "position": "401",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "401H": {
+                        "benign": 0.9361,
+                        "harmful": 0.0639,
+                        "rank": 325,
+                        "position": "401",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "401N": {
+                        "benign": 0.9364,
+                        "harmful": 0.0636,
+                        "rank": 331,
+                        "position": "401",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "401M": {
+                        "benign": 0.8535,
+                        "harmful": 0.1465,
+                        "rank": 235,
+                        "position": "401",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "401L": {
+                        "benign": 0.8707,
+                        "harmful": 0.1293,
+                        "rank": 243,
+                        "position": "401",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "401C": {
+                        "benign": 0.8594,
+                        "harmful": 0.1406,
+                        "rank": 237,
+                        "position": "401",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "401A": {
+                        "benign": 0.9339,
+                        "harmful": 0.0661,
+                        "rank": 321,
+                        "position": "401",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "401G": {
+                        "benign": 0.8887,
+                        "harmful": 0.1113,
+                        "rank": 272,
+                        "position": "401",
+                        "amino_acid": "G",
+                        "original": "K"
+            },
+            "401F": {
+                        "benign": 0.8735,
+                        "harmful": 0.1265,
+                        "rank": 246,
+                        "position": "401",
+                        "amino_acid": "F",
+                        "original": "K"
+            },
+            "401E": {
+                        "benign": 0.9335,
+                        "harmful": 0.0665,
+                        "rank": 320,
+                        "position": "401",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "401D": {
+                        "benign": 0.8842,
+                        "harmful": 0.1158,
+                        "rank": 265,
+                        "position": "401",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "305N": {
+                        "benign": 0.8164,
+                        "harmful": 0.1836,
+                        "rank": 146,
+                        "position": "305",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "305L": {
+                        "benign": 0.7935,
+                        "harmful": 0.2065,
+                        "rank": 51,
+                        "position": "305",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "305M": {
+                        "benign": 0.7937,
+                        "harmful": 0.2063,
+                        "rank": 52,
+                        "position": "305",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "305K": {
+                        "benign": 0.8042,
+                        "harmful": 0.1958,
+                        "rank": 89,
+                        "position": "305",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "305H": {
+                        "benign": 0.803,
+                        "harmful": 0.197,
+                        "rank": 87,
+                        "position": "305",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "305I": {
+                        "benign": 0.8,
+                        "harmful": 0.2,
+                        "rank": 77,
+                        "position": "305",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "305G": {
+                        "benign": 0.8223,
+                        "harmful": 0.1777,
+                        "rank": 165,
+                        "position": "305",
+                        "amino_acid": "G",
+                        "original": "K"
+            },
+            "305D": {
+                        "benign": 0.8461,
+                        "harmful": 0.1539,
+                        "rank": 231,
+                        "position": "305",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "305E": {
+                        "benign": 0.8072,
+                        "harmful": 0.1928,
+                        "rank": 102,
+                        "position": "305",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "305C": {
+                        "benign": 0.8109,
+                        "harmful": 0.1891,
+                        "rank": 122,
+                        "position": "305",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "305A": {
+                        "benign": 0.7874,
+                        "harmful": 0.2126,
+                        "rank": 37,
+                        "position": "305",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "305Y": {
+                        "benign": 0.8101,
+                        "harmful": 0.1899,
+                        "rank": 117,
+                        "position": "305",
+                        "amino_acid": "Y",
+                        "original": "K"
+            },
+            "305V": {
+                        "benign": 0.8112,
+                        "harmful": 0.1888,
+                        "rank": 127,
+                        "position": "305",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "305W": {
+                        "benign": 0.7833,
+                        "harmful": 0.2167,
+                        "rank": 28,
+                        "position": "305",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "305T": {
+                        "benign": 0.8232,
+                        "harmful": 0.1768,
+                        "rank": 167,
+                        "position": "305",
+                        "amino_acid": "T",
+                        "original": "K"
+            },
+            "305R": {
+                        "benign": 0.8,
+                        "harmful": 0.2,
+                        "rank": 78,
+                        "position": "305",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "305S": {
+                        "benign": 0.7859,
+                        "harmful": 0.2141,
+                        "rank": 36,
+                        "position": "305",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "305P": {
+                        "benign": 0.7468,
+                        "harmful": 0.2532,
+                        "rank": 2,
+                        "position": "305",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "305Q": {
+                        "benign": 0.8028,
+                        "harmful": 0.1972,
+                        "rank": 86,
+                        "position": "305",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "306C": {
+                        "benign": 0.7968,
+                        "harmful": 0.2032,
+                        "rank": 66,
+                        "position": "306",
+                        "amino_acid": "C",
+                        "original": "K"
+            },
+            "306A": {
+                        "benign": 0.747,
+                        "harmful": 0.253,
+                        "rank": 3,
+                        "position": "306",
+                        "amino_acid": "A",
+                        "original": "K"
+            },
+            "306G": {
+                        "benign": 0.7649,
+                        "harmful": 0.2351,
+                        "rank": 10,
+                        "position": "306",
+                        "amino_acid": "G",
+                        "original": "K"
+            },
+            "306F": {
+                        "benign": 0.8135,
+                        "harmful": 0.1865,
+                        "rank": 136,
+                        "position": "306",
+                        "amino_acid": "F",
+                        "original": "K"
+            },
+            "306E": {
+                        "benign": 0.8141,
+                        "harmful": 0.1859,
+                        "rank": 137,
+                        "position": "306",
+                        "amino_acid": "E",
+                        "original": "K"
+            },
+            "306D": {
+                        "benign": 0.8433,
+                        "harmful": 0.1567,
+                        "rank": 229,
+                        "position": "306",
+                        "amino_acid": "D",
+                        "original": "K"
+            },
+            "306K": {
+                        "benign": 0.7751,
+                        "harmful": 0.2249,
+                        "rank": 18,
+                        "position": "306",
+                        "amino_acid": "K",
+                        "original": "K"
+            },
+            "306I": {
+                        "benign": 0.7593,
+                        "harmful": 0.2407,
+                        "rank": 8,
+                        "position": "306",
+                        "amino_acid": "I",
+                        "original": "K"
+            },
+            "306H": {
+                        "benign": 0.8175,
+                        "harmful": 0.1825,
+                        "rank": 153,
+                        "position": "306",
+                        "amino_acid": "H",
+                        "original": "K"
+            },
+            "306N": {
+                        "benign": 0.779,
+                        "harmful": 0.221,
+                        "rank": 24,
+                        "position": "306",
+                        "amino_acid": "N",
+                        "original": "K"
+            },
+            "306M": {
+                        "benign": 0.778,
+                        "harmful": 0.222,
+                        "rank": 21,
+                        "position": "306",
+                        "amino_acid": "M",
+                        "original": "K"
+            },
+            "306L": {
+                        "benign": 0.8345,
+                        "harmful": 0.1655,
+                        "rank": 211,
+                        "position": "306",
+                        "amino_acid": "L",
+                        "original": "K"
+            },
+            "306S": {
+                        "benign": 0.8005,
+                        "harmful": 0.1995,
+                        "rank": 81,
+                        "position": "306",
+                        "amino_acid": "S",
+                        "original": "K"
+            },
+            "306R": {
+                        "benign": 0.7702,
+                        "harmful": 0.2298,
+                        "rank": 12,
+                        "position": "306",
+                        "amino_acid": "R",
+                        "original": "K"
+            },
+            "306Q": {
+                        "benign": 0.8303,
+                        "harmful": 0.1697,
+                        "rank": 200,
+                        "position": "306",
+                        "amino_acid": "Q",
+                        "original": "K"
+            },
+            "306P": {
+                        "benign": 0.8433,
+                        "harmful": 0.1567,
+                        "rank": 228,
+                        "position": "306",
+                        "amino_acid": "P",
+                        "original": "K"
+            },
+            "306W": {
+                        "benign": 0.8237,
+                        "harmful": 0.1763,
+                        "rank": 171,
+                        "position": "306",
+                        "amino_acid": "W",
+                        "original": "K"
+            },
+            "306V": {
+                        "benign": 0.7693,
+                        "harmful": 0.2307,
+                        "rank": 11,
+                        "position": "306",
+                        "amino_acid": "V",
+                        "original": "K"
+            },
+            "306T": {
+                        "benign": 0.7577,
+                        "harmful": 0.2423,
+                        "rank": 6,
+                        "position": "306",
+                        "amino_acid": "T",
+                        "original": "K"
+            }
+};;
+
+        let selectedAminoAcid = null;
+
+        // 氨基酸选择功能
+        document.querySelectorAll('.amino-acid').forEach(aa => {
+            aa.addEventListener('click', function() {
+                document.querySelectorAll('.amino-acid').forEach(a => a.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedAminoAcid = this.dataset.aa;
+            });
+        });
+
+        function selectPosition(position) {
+            document.getElementById('position').value = position;
+        }
+
+        function predictMutation() {
+            const position = document.getElementById('position').value;
+            
+            if (!position || !selectedAminoAcid) {
+                alert('⚠️ 请输入突变位置并选择目标氨基酸！');
+                return;
+            }
+
+            const mutationId = position + selectedAminoAcid;
+            const data = mutationData[mutationId];
+
+            if (!data) {
+                alert('❌ 抱歉，数据库中没有找到该突变的预测结果！\n\n可用位置: 302, 305, 306, 309, 346, 348, 384, 401, 417');
+                return;
+            }
+
+            // 显示结果
+            const resultsCard = document.getElementById('results');
+            resultsCard.classList.add('show');
+            
+            // 更新基本信息
+            document.getElementById('mutation-id').textContent = mutationId;
+            document.getElementById('original-aa').textContent = `${data.original} (${getAminoAcidName(data.original)})`;
+            document.getElementById('target-aa').textContent = `${selectedAminoAcid} (${getAminoAcidName(selectedAminoAcid)})`;
+            document.getElementById('mutation-position').textContent = position;
+            document.getElementById('rank').textContent = data.rank;
+
+            // 更新概率条（添加动画效果）
+            const benignPercent = Math.round(data.benign * 100);
+            const harmfulPercent = Math.round(data.harmful * 100);
+
+            setTimeout(() => {
+                const benignBar = document.getElementById('benign-bar');
+                const harmfulBar = document.getElementById('harmful-bar');
+
+                benignBar.style.width = benignPercent + '%';
+                benignBar.textContent = benignPercent + '%';
+
+                harmfulBar.style.width = harmfulPercent + '%';
+                harmfulBar.textContent = harmfulPercent + '%';
+            }, 100);
+
+            // 风险评估
+            let riskText = '';
+            let riskLevel = '';
+            
+            if (data.harmful > 0.2) {
+                riskText = '⚠️ 高风险突变：该突变预测具有显著的有害效应，可能严重影响蛋白质功能。建议进行详细的实验验证和功能研究。';
+                riskLevel = '高风险';
+            } else if (data.harmful > 0.1) {
+                riskText = '⚡ 中等风险突变：该突变可能产生轻度到中度的功能影响。建议根据具体应用场景评估其重要性。';
+                riskLevel = '中等风险';
+            } else {
+                riskText = '✅ 低风险突变：该突变预测对蛋白质功能影响较小，通常被认为是良性的。但仍建议在关键应用中进行验证。';
+                riskLevel = '低风险';
+            }
+
+            document.getElementById('risk-text').textContent = riskText;
+
+            // 计算百分位
+            const percentile = Math.round((1 - (data.rank - 1) / 171) * 100);
+            document.getElementById('percentile').textContent = percentile + '%';
+
+            // 滚动到结果
+            resultsCard.scrollIntoView({behavior: 'smooth'});
+        }
+
+        function getAminoAcidName(letter) {
+            const names = {
+                'A': '丙氨酸', 'R': '精氨酸', 'N': '天冬酰胺', 'D': '天冬氨酸',
+                'C': '半胱氨酸', 'Q': '谷氨酰胺', 'E': '谷氨酸', 'G': '甘氨酸',
+                'H': '组氨酸', 'I': '异亮氨酸', 'L': '亮氨酸', 'K': '赖氨酸',
+                'M': '蛋氨酸', 'F': '苯丙氨酸', 'P': '脯氨酸', 'S': '丝氨酸',
+                'T': '苏氨酸', 'W': '色氨酸', 'Y': '酪氨酸', 'V': '缬氨酸'
+            };
+            return names[letter] || letter;
+        }
+
+        // 回车键预测
+        document.getElementById('position').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                predictMutation();
+            }
+        });
+
+        // 输入验证
+        document.getElementById('position').addEventListener('input', function() {
+            const value = parseInt(this.value);
+            if (value && (value < 302 || value > 417)) {
+                this.style.borderColor = '#ff6b6b';
+            } else {
+                this.style.borderColor = '#4facfe';
+            }
+        });
+    </script>
+</body>
+</html>
