@@ -1,0 +1,21 @@
+# Git命令行上传步骤
+
+# 1. 初始化本地Git仓库
+git init
+
+# 2. 添加远程仓库
+git remote add origin https://github.com/anjiachen/mutation-predictor.git
+
+# 3. 添加文件到暂存区
+git add index.html README.md
+
+# 4. 提交文件
+git commit -m "发布蛋白质突变预测系统"
+
+# 5. 推送到GitHub
+git branch -M main
+git push -u origin main
+
+# 如果遇到身份验证问题，需要先配置：
+# git config --global user.name "您的用户名"
+# git config --global user.email "您的邮箱" 

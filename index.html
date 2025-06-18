@@ -196,6 +196,27 @@
             transform: none;
         }
 
+        .stats-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stats-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
         .results-card {
             grid-column: 1 / -1;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -383,6 +404,170 @@
                 grid-template-columns: repeat(5, 1fr);
             }
         }
+
+        /* 热图样式 */
+        .heatmap-card {
+            grid-column: 1 / -1;
+            margin-top: 30px;
+        }
+
+        .heatmap-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .heatmap-header h3 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .heatmap-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+            gap: 15px;
+        }
+
+        .legend-gradient {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-bar {
+            width: 200px;
+            height: 20px;
+            background: linear-gradient(to right, #fff3cd 0%, #dc3545 100%);
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+
+        .legend-label {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .heatmap-table {
+            display: grid;
+            gap: 2px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 15px;
+            margin: 0 auto;
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        .heatmap-row {
+            display: grid;
+            grid-template-columns: 80px repeat(9, 1fr);
+            gap: 2px;
+            align-items: center;
+        }
+
+        .heatmap-cell {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s;
+            position: relative;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .heatmap-cell.header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .heatmap-cell.row-header {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .heatmap-cell.top5 {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffd93d 100%);
+            color: #333;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+            transform: scale(1.02);
+        }
+
+        .heatmap-cell.blue-highlight {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+            color: white !important;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.4);
+            transform: scale(1.02);
+        }
+
+        .heatmap-cell.top5.blue-highlight {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+            color: white !important;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(79, 172, 254, 0.4);
+            transform: scale(1.02);
+        }
+
+        .heatmap-cell.empty {
+            background: #f8f9fa;
+            color: #ccc;
+        }
+
+        .heatmap-cell:hover:not(.header):not(.row-header):not(.empty) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .value-display {
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        .aa-letter {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+
+        .binding-value {
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .heatmap-table {
+                font-size: 10px;
+                padding: 10px;
+            }
+            
+            .heatmap-cell {
+                padding: 6px 2px;
+                font-size: 10px;
+                min-height: 30px;
+            }
+            
+            .legend-bar {
+                width: 150px;
+                height: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -499,6 +684,7 @@
                     </div>
                 </div>
                 <button class="predict-btn" onclick="predictMutation()">🔬 预测突变效应</button>
+                <button class="stats-btn" onclick="showHeatmap()">📈 数据统计热图</button>
             </div>
         </div>
 
@@ -561,10 +747,31 @@
              </div>
         </div>
 
+        <!-- 热图统计区域 -->
+        <div class="card heatmap-card" id="heatmap-container" style="display: none;">
+            <div class="heatmap-header">
+                <h3>📊 蛋白质突变TCOY结合强度热图统计</h3>
+                <p>显示各位点Top5氨基酸的结合强度分布</p>
+            </div>
+            <div class="heatmap-content">
+                <div class="heatmap-legend">
+                    <span>TCOY结合强度：</span>
+                    <div class="legend-gradient">
+                        <span class="legend-label">低 (0%)</span>
+                        <div class="legend-bar"></div>
+                        <span class="legend-label">高 (30%)</span>
+                    </div>
+                </div>
+                <div class="heatmap-table" id="heatmap-table">
+                    <!-- 热图表格将在此动态生成 -->
+                </div>
+            </div>
+        </div>
+
         <div class="data-info">
-            <h3>📋 数据集信息</h3>
-            <p>本预测系统基于 171 个蛋白质突变的实验数据训练，涵盖位置 302-417 区域的所有可能氨基酸替换。</p>
-            <p>模型采用深度学习技术，能够准确预测突变对蛋白质功能的影响程度。</p>
+            <h3>📋 系统信息</h3>
+            <p>本系统展示了基于机器学习模型对 171 个蛋白质突变的预测结果，涵盖位置 302-417 区域的所有可能氨基酸替换。</p>
+            <p>该模型结合了结构建模与大量实验数据训练，专门针对特定底物（TCOY）的识别能力进行预测，为酶工程改造提供指导。</p>
         </div>
     </div>
 
@@ -1984,21 +2191,21 @@
             document.getElementById('rank').textContent = data.rank;
 
                          // 更新TCOY结合强度（添加动画效果）
-             const benignPercent = Math.round(data.benign * 100);
+             const bindingPercent = Math.round(data.harmful * 100);
 
              setTimeout(() => {
                  const benignBar = document.getElementById('benign-bar');
 
-                 benignBar.style.width = benignPercent + '%';
-                 benignBar.textContent = benignPercent + '%';
+                 benignBar.style.width = bindingPercent + '%';
+                 benignBar.textContent = bindingPercent + '%';
              }, 100);
 
                          // TCOY结合强度评估
              let riskText = '';
              
-             if (data.benign > 0.9) {
+             if (data.harmful > 0.2) {
                  riskText = '🟢 高结合强度：该突变预测具有很强的TCOY结合能力，结合强度优异。';
-             } else if (data.benign > 0.8) {
+             } else if (data.harmful > 0.1) {
                  riskText = '🟡 中等结合强度：该突变预测具有中等的TCOY结合能力，结合强度良好。';
              } else {
                  riskText = '🔴 低结合强度：该突变预测的TCOY结合能力较弱，建议进一步验证。';
@@ -2041,6 +2248,160 @@
                 this.style.borderColor = '#4facfe';
             }
         });
+
+        // 热图统计数据 - 直接从CSV数据生成
+        const heatmapData = {
+            positions: [302, 305, 306, 309, 346, 348, 384, 401, 417],
+            amino_acids: ['A', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'Y'],
+            // 每个位点的Top5氨基酸 (按TCOY结合强度排序)
+            top5_data: {
+                302: [
+                    {aa: 'Y', value: 22.8, rank: 14},
+                    {aa: 'V', value: 22.4, rank: 19},
+                    {aa: 'F', value: 21.4, rank: 35},
+                    {aa: 'G', value: 20.7, rank: 48},
+                    {aa: 'P', value: 19.7, rank: 85}
+                ],
+                305: [
+                    {aa: 'P', value: 25.3, rank: 2},
+                    {aa: 'W', value: 21.7, rank: 28},
+                    {aa: 'S', value: 21.4, rank: 36},
+                    {aa: 'A', value: 21.3, rank: 37},
+                    {aa: 'L', value: 20.7, rank: 51}
+                ],
+                306: [
+                    {aa: 'A', value: 25.3, rank: 3},
+                    {aa: 'T', value: 24.2, rank: 6},
+                    {aa: 'I', value: 24.1, rank: 8},
+                    {aa: 'G', value: 23.5, rank: 10},
+                    {aa: 'V', value: 23.1, rank: 11}
+                ],
+                309: [
+                    {aa: 'W', value: 24.8, rank: 5},
+                    {aa: 'V', value: 22.6, rank: 15},
+                    {aa: 'C', value: 21.9, rank: 26},
+                    {aa: 'T', value: 21.6, rank: 32},
+                    {aa: 'R', value: 21.1, rank: 40}
+                ],
+                346: [
+                    {aa: 'K', value: 23.8, rank: 9},
+                    {aa: 'W', value: 22.5, rank: 16},
+                    {aa: 'D', value: 22.5, rank: 17},
+                    {aa: 'E', value: 21.6, rank: 30},
+                    {aa: 'R', value: 21.5, rank: 34}
+                ],
+                348: [
+                    {aa: 'K', value: 24.8, rank: 4},
+                    {aa: 'C', value: 23.0, rank: 13},
+                    {aa: 'S', value: 22.1, rank: 23},
+                    {aa: 'E', value: 21.6, rank: 31},
+                    {aa: 'A', value: 21.5, rank: 33}
+                ],
+                384: [
+                    {aa: 'H', value: 12.2, rank: 253},
+                    {aa: 'W', value: 12.0, rank: 259},
+                    {aa: 'E', value: 10.4, rank: 279},
+                    {aa: 'P', value: 10.1, rank: 284},
+                    {aa: 'L', value: 9.2, rank: 287}
+                ],
+                401: [
+                    {aa: 'M', value: 14.7, rank: 235},
+                    {aa: 'C', value: 14.1, rank: 237},
+                    {aa: 'L', value: 12.9, rank: 243},
+                    {aa: 'F', value: 12.6, rank: 246},
+                    {aa: 'D', value: 11.6, rank: 265}
+                ],
+                417: [
+                    {aa: 'S', value: 22.1, rank: 22},
+                    {aa: 'A', value: 19.5, rank: 94},
+                    {aa: 'C', value: 17.6, rank: 172},
+                    {aa: 'T', value: 15.7, rank: 227},
+                    {aa: 'M', value: 13.8, rank: 238}
+                ]
+            }
+        };
+
+        function showHeatmap() {
+            const container = document.getElementById('heatmap-container');
+            const tableContainer = document.getElementById('heatmap-table');
+            
+            // 切换显示状态
+            if (container.style.display === 'none' || container.style.display === '') {
+                container.style.display = 'block';
+                generateHeatmapTable();
+                container.scrollIntoView({behavior: 'smooth'});
+            } else {
+                container.style.display = 'none';
+            }
+        }
+
+        function generateHeatmapTable() {
+            const tableContainer = document.getElementById('heatmap-table');
+            const positions = heatmapData.positions;
+            const aminoAcids = heatmapData.amino_acids;
+            
+            // 指定需要标蓝色的突变
+            const blueMutations = ['302Y', '302V', '306A', '306T', '306I', '309W', '309V', '346K', '346W', '346D', '348K', '348C'];
+            
+            let tableHTML = '';
+            
+            // 创建表头
+            tableHTML += '<div class="heatmap-row">';
+            tableHTML += '<div class="heatmap-cell header">氨基酸</div>';
+            positions.forEach(pos => {
+                tableHTML += `<div class="heatmap-cell header">${pos}</div>`;
+            });
+            tableHTML += '</div>';
+            
+            // 创建每一行氨基酸
+            aminoAcids.forEach(aa => {
+                tableHTML += '<div class="heatmap-row">';
+                tableHTML += `<div class="heatmap-cell row-header">${aa}</div>`;
+                
+                positions.forEach(pos => {
+                    const mutationId = pos + aa;
+                    const isBlue = blueMutations.includes(mutationId);
+                    const top5Data = heatmapData.top5_data[pos];
+                    const aaData = top5Data.find(item => item.aa === aa);
+                    
+                    if (aaData) {
+                        // 这是Top5氨基酸，检查是否需要标蓝色
+                        const cellClass = isBlue ? 'top5 blue-highlight' : 'top5';
+                        tableHTML += `
+                            <div class="heatmap-cell ${cellClass}" title="排名: #${aaData.rank}&#10;TCOY结合强度: ${aaData.value}%">
+                                <div class="value-display">
+                                    <div class="aa-letter">${aa}</div>
+                                    <div class="binding-value">${aaData.value}%</div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // 从mutationData中查找该位置和氨基酸的数据
+                        const mutationInfo = mutationData[mutationId];
+                        
+                        if (mutationInfo) {
+                            const bindingStrength = Math.round(mutationInfo.harmful * 100 * 10) / 10;
+                            const cellClass = isBlue ? 'blue-highlight' : '';
+                            tableHTML += `
+                                <div class="heatmap-cell ${cellClass}" title="排名: #${mutationInfo.rank}&#10;TCOY结合强度: ${bindingStrength}%">
+                                    <div class="value-display">
+                                        <div class="aa-letter">${aa}</div>
+                                        <div class="binding-value">${bindingStrength}%</div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            // 没有数据的位置
+                            tableHTML += '<div class="heatmap-cell empty">-</div>';
+                        }
+                    }
+                });
+                
+                tableHTML += '</div>';
+            });
+            
+            tableContainer.innerHTML = tableHTML;
+        }
     </script>
 </body>
 </html>
