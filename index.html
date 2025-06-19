@@ -42,6 +42,178 @@
             opacity: 0.9;
         }
 
+        /* 上传界面样式 */
+        #upload-interface {
+            display: block;
+        }
+
+        .upload-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed #4facfe;
+            border-radius: 15px;
+            padding: 40px 20px;
+            margin-bottom: 30px;
+            background: #f8f9fa;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-area:hover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+        }
+
+        .upload-area.dragover {
+            background: #e3f2fd;
+            border-color: #1976d2;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #4facfe;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtitle {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-info {
+            background: #e8f5e8;
+            border: 2px solid #56ab2f;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #56ab2f;
+            margin-bottom: 5px;
+        }
+
+        .file-details {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .run-model-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .run-model-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .run-model-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(86, 171, 47, 0.3);
+        }
+
+        .error-message {
+            background: #ffe8e8;
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #d63031;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .loading-spinner {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #4facfe;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .requirements {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .requirements h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+
+        .requirements ul {
+            margin-left: 20px;
+        }
+
+        .requirements li {
+            margin-bottom: 5px;
+        }
+
+        /* 预测系统界面样式（隐藏） */
+        #prediction-interface {
+            display: none;
+        }
+
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -572,12 +744,45 @@
 </head>
 <body>
     <div class="container">
-                 <div class="header">
-             <h1>🧬 蛋白质突变预测系统</h1>
-             <p>基于深度学习模型的高精度突变效应预测平台</p>
-         </div>
+        <div class="header">
+            <h1>🧬 蛋白质突变预测系统</h1>
+            <p>基于深度学习模型的高精度突变效应预测平台</p>
+        </div>
 
-        <div class="main-grid">
+        <!-- 上传数据界面 -->
+        <div id="upload-interface">
+            <div class="upload-container">
+                <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">点击选择文件或拖拽文件至此处</div>
+                    <div class="upload-subtitle">请上传训练数据文件（支持Excel格式）</div>
+                </div>
+
+                <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+
+                <div id="fileInfo" class="file-info">
+                    <div class="file-name" id="fileName"></div>
+                    <div class="file-details" id="fileDetails"></div>
+                </div>
+
+                <div id="errorMessage" class="error-message">
+                    <div id="errorText"></div>
+                </div>
+
+                <div id="loadingSpinner" class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>正在运行模型...</p>
+                </div>
+
+                <button id="runModelBtn" class="run-model-btn">
+                    🚀 运行突变预测模型
+                </button>
+            </div>
+        </div>
+
+        <!-- 预测系统界面（初始隐藏） -->
+        <div id="prediction-interface">
+            <div class="main-grid">
             <div class="card">
                 <h2>📍 选择突变位置</h2>
                 <div class="position-section">
@@ -773,6 +978,7 @@
             <p>本系统展示了基于机器学习模型对 171 个蛋白质突变的预测结果，涵盖位置 302-417 区域的所有可能氨基酸替换。</p>
             <p>该模型结合了结构建模与大量实验数据训练，专门针对特定底物（TCOY）的识别能力进行预测，为酶工程改造提供指导。</p>
         </div>
+        </div> <!-- 关闭 prediction-interface div -->
     </div>
 
     <script>
@@ -2402,6 +2608,158 @@
             
             tableContainer.innerHTML = tableHTML;
         }
+
+        // ===== 上传功能相关代码 =====
+        let uploadedFile = null;
+
+        // 文件上传事件监听
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        document.getElementById('runModelBtn').addEventListener('click', runModel);
+
+        // 拖拽上传功能
+        const uploadArea = document.querySelector('.upload-area');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            // 重置错误信息
+            hideError();
+            
+            // 检查文件类型
+            if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+                showError('❌ 请上传Excel文件（.xlsx 或 .xls 格式）');
+                return;
+            }
+
+            // 简单检查文件名是否包含关键词（放宽限制）
+            const fileName = file.name.toLowerCase();
+            if (!fileName.includes('pylrs') && !fileName.includes('训练') && !fileName.includes('数据')) {
+                showError('❌ 请上传正确的训练数据文件');
+                return;
+            }
+
+            // 检查文件大小（放宽到0.5-10MB）
+            const fileSizeMB = file.size / (1024 * 1024);
+            if (fileSizeMB < 0.5 || fileSizeMB > 10) {
+                showError('❌ 文件大小异常，请确认是否为正确的数据文件');
+                return;
+            }
+
+            // 文件通过基本验证
+            uploadedFile = file;
+            showFileInfo(file);
+            enableRunButton();
+        }
+
+        function showFileInfo(file) {
+            const fileInfo = document.getElementById('fileInfo');
+            const fileName = document.getElementById('fileName');
+            const fileDetails = document.getElementById('fileDetails');
+            
+            fileName.textContent = `✅ ${file.name}`;
+            fileDetails.innerHTML = `
+                <div>文件大小: ${(file.size / (1024 * 1024)).toFixed(2)} MB</div>
+                <div>上传时间: ${new Date().toLocaleString()}</div>
+                <div>状态: 文件验证通过，可以运行模型</div>
+            `;
+            
+            fileInfo.classList.add('show');
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+            
+            errorText.textContent = message;
+            errorMessage.classList.add('show');
+            
+            // 隐藏文件信息和禁用按钮
+            document.getElementById('fileInfo').classList.remove('show');
+            disableRunButton();
+        }
+
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        function enableRunButton() {
+            const runBtn = document.getElementById('runModelBtn');
+            runBtn.classList.add('active');
+        }
+
+        function disableRunButton() {
+            const runBtn = document.getElementById('runModelBtn');
+            runBtn.classList.remove('active');
+        }
+
+        function runModel() {
+            if (!uploadedFile) {
+                showError('❌ 请先上传数据文件！');
+                return;
+            }
+
+            // 显示加载动画
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            loadingSpinner.style.display = 'block';
+            
+            // 禁用按钮
+            const runBtn = document.getElementById('runModelBtn');
+            runBtn.style.opacity = '0.5';
+            runBtn.style.pointerEvents = 'none';
+
+            // 模拟模型运行过程
+            setTimeout(() => {
+                // 隐藏上传界面
+                document.getElementById('upload-interface').style.display = 'none';
+                
+                // 显示预测界面
+                document.getElementById('prediction-interface').style.display = 'block';
+                
+                // 隐藏加载动画
+                loadingSpinner.style.display = 'none';
+                
+                // 滚动到顶部
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // 显示成功提示
+                setTimeout(() => {
+                    alert('🎉 模型运行成功！现在可以进行蛋白质突变预测了。');
+                }, 500);
+                
+            }, 3000); // 3秒后显示预测界面
+        }
+
+                 // 页面加载时的初始化
+         document.addEventListener('DOMContentLoaded', function() {
+             // 确保上传界面显示，预测界面隐藏
+             document.getElementById('upload-interface').style.display = 'block';
+             document.getElementById('prediction-interface').style.display = 'none';
+         });
     </script>
 </body>
 </html>
