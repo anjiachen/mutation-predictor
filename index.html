@@ -198,6 +198,37 @@
             transform: none;
         }
 
+        .ai-results-section {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+        }
+
+        .ai-results-section .stats-btn {
+            width: auto;
+            min-width: 200px;
+            max-width: 300px;
+            background: linear-gradient(135deg, #ff8c00 0%, #ffa500 100%);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: inline-block;
+        }
+
+        .ai-results-section .stats-btn:hover {
+            background: linear-gradient(135deg, #ff7f00 0%, #ff9500 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 140, 0, 0.3);
+        }
+
         .stats-btn {
             width: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -746,6 +777,11 @@
                      <div class="stat-number" id="confidence">高</div>
                      <div class="stat-label">预测置信度</div>
                  </div>
+             </div>
+             
+             <!-- AI运算全部结果按钮 -->
+             <div class="ai-results-section" id="aiResultsSection" style="display: none;">
+                 <button id="aiResultsBtn" class="stats-btn" onclick="showHeatmap()">🤖 AI运算全部结果</button>
              </div>
         </div>
 
@@ -2225,16 +2261,12 @@
             // 增加预测次数
             predictionCount++;
             
-            // 检查是否达到10次预测，如果是则自动显示热图
+            // 检查是否达到10次预测，如果是则显示AI运算全部结果按钮
             if (predictionCount >= 10 && !heatmapShown) {
-                setTimeout(() => {
-                    // 显示提示弹窗
-                    alert('🎉 您已完成10次预测！请查看全部数据统计热图。');
-                    
-                    // 自动显示热图
-                    showHeatmap();
-                    heatmapShown = true;
-                }, 1000);
+                // 显示AI运算全部结果按钮区域
+                const aiResultsSection = document.getElementById('aiResultsSection');
+                aiResultsSection.style.display = 'block';
+                heatmapShown = true;
             }
         }
 
